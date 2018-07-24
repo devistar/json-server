@@ -81,10 +81,16 @@ module.exports = (db, name, opts) => {
           _.has(arr[i], query) ||
           query === 'callback' ||
           query === '_' ||
+          /_lt$/.test(query) ||
+          /_gt$/.test(query) ||
+          /_le$/.test(query) ||
+          /_ge$/.test(query) ||
           /_lte$/.test(query) ||
           /_gte$/.test(query) ||
           /_ne$/.test(query) ||
-          /_like$/.test(query)
+          /_like$/.test(query) ||
+          /_null$/.test(query) ||
+          /_empty$/.test(query)
         )
           return
       }
@@ -120,29 +126,51 @@ module.exports = (db, name, opts) => {
           return arr
             .map(function(value) {
               const isDifferent = /_ne$/.test(key)
-              const isRange = /_lte$/.test(key) || /_gte$/.test(key)
+              const isRange = /(_le|_lte|_lt|_ge|_gte|_gt)$/.test(key)
               const isLike = /_like$/.test(key)
-              const path = key.replace(/(_lte|_gte|_ne|_like)$/, '')
+              const isEmpty = /_is_empty$/.test(key)
+              const isNull = /_is_null$/.test(key)
+              const path = key.replace(
+                /(_le|_lte|_gte|_ge|_ne|_like|_is_empty|_is_null)$/,
+                ''
+              )
               // get item value based on path
               // i.e post.title -> 'foo'
               const elementValue = _.get(element, path)
 
-              // Prevent toString() failing on undefined or null values
-              if (elementValue === undefined || elementValue === null) {
-                return
-              }
-
               if (isRange) {
-                const isLowerThan = /_gte$/.test(key)
+                const isLowerOrEqual = /(_le|_lte)$/.test(key)
+                const isLowerThan = /_lt$/.test(key)
+                const isGreaterOrEqual = /(_ge|_gte)$/.test(key)
+                const isGreaterThan = /_gt$/.test(key)
 
-                return isLowerThan
-                  ? value <= elementValue
-                  : value >= elementValue
+                if (isLowerOrEqual) {
+                  return value >= elementValue
+                }
+
+                if (isLowerThan) {
+                  return value > elementValue
+                }
+
+                if (isGreaterOrEqual) {
+                  return value <= elementValue
+                }
+
+                if (isGreaterThan) {
+                  return value < elementValue
+                }
               } else if (isDifferent) {
                 return value !== elementValue.toString()
               } else if (isLike) {
                 return new RegExp(value, 'i').test(elementValue.toString())
-              } else {
+              } else if (isNull) {
+                return !elementValue
+              } else if (isEmpty) {
+                return elementValue && elementValue.length > 0
+              } else if (
+                typeof elementValue !== 'undefined' &&
+                elementValue !== null
+              ) {
                 return value === elementValue.toString()
               }
             })

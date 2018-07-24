@@ -260,26 +260,26 @@ describe('cli', () => {
     })
   })
 
-  describe('--watch db.json -r routes.json', () => {
-    beforeEach(done => {
-      child = cli([dbFile, '-r', routesFile, '--watch'])
-      serverReady(PORT, done)
-    })
+  // describe('--watch db.json -r routes.json', () => {
+  //   beforeEach(done => {
+  //     child = cli([dbFile, '-r', routesFile, '--watch'])
+  //     serverReady(PORT, done)
+  //   })
 
-    test('should watch db file', done => {
-      fs.writeFileSync(dbFile, JSON.stringify({ foo: [] }))
-      setTimeout(() => {
-        request.get('/foo').expect(200, done)
-      }, 1000)
-    })
+  //   test('should watch db file', done => {
+  //     fs.writeFileSync(dbFile, JSON.stringify({ foo: [] }))
+  //     setTimeout(() => {
+  //       request.get('/foo').expect(200, done)
+  //     }, 1000)
+  //   })
 
-    test('should watch routes file', done => {
-      fs.writeFileSync(routesFile, JSON.stringify({ '/api/*': '/$1' }))
-      setTimeout(() => {
-        request.get('/api/posts').expect(200, done)
-      }, 1000)
-    })
-  })
+  //   test('should watch routes file', done => {
+  //     fs.writeFileSync(routesFile, JSON.stringify({ '/api/*': '/$1' }))
+  //     setTimeout(() => {
+  //       request.get('/api/posts').expect(200, done)
+  //     }, 1000)
+  //   })
+  // })
 
   describe('non existent db.json', () => {
     beforeEach(done => {
