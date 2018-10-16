@@ -33,7 +33,7 @@ module.exports = (db, name, opts) => {
       [].concat(e).forEach(innerResource => {
         const plural = pluralize(innerResource)
         if (db.get(plural).value()) {
-          const prop = `${innerResource}${opts.foreignKeySuffix}`
+          const prop = `${innerResource}${opts.foreignKeySuffix}` 
           resource[innerResource] = db
             .get(plural)
             .getById(resource[prop])
@@ -244,7 +244,7 @@ module.exports = (db, name, opts) => {
     }
 
     // embed and expand
-    chain = chain.cloneDeep().forEach(function(element) {
+    chain = chain.forEach(function(element) {
       embed(element, _embed)
       expand(element, _expand)
     })
