@@ -12,7 +12,7 @@ module.exports = (db, name, opts) => {
   router.use(delay)
 
   // Embed function used in GET /name and GET /name/id
-  function embed(resource, e) {    
+  function embed(resource, e) {
     e &&
       e.split(",").forEach(externalResource => {
         if (db.get(externalResource).value) {
@@ -22,9 +22,9 @@ module.exports = (db, name, opts) => {
           resource[externalResource] = db
             .get(externalResource)
             .filter(query)
-            .value() 
+            .value()
         }
-      })    
+      })
   }
 
   // Expand function used in GET /name and GET /name/id
@@ -33,11 +33,11 @@ module.exports = (db, name, opts) => {
       e.split(",").forEach(innerResource => {
         const expandedResource = opts.pluralize ? pluralize(innerResource) : innerResource;
         if (db.get(expandedResource).value()) {
-          const prop = `${innerResource}${opts.foreignKeySuffix}` 
-          resource[innerResource] = db
+          const fk = `${innerResource}${opts.foreignKeySuffix}`
+          resource[innerResource] = resource[fk] ? db
             .get(expandedResource)
-            .getById(resource[prop])
-            .value()
+            .getById(resource[fk])
+            .value() : {}
         }
       })
   }
@@ -125,7 +125,7 @@ module.exports = (db, name, opts) => {
 
         chain = chain.filter(element => {
           return arr
-            .map(function(value) {
+            .map(function (value) {
               const isDifferent = /_ne$/.test(key)
               const isRange = /(_le|_lte|_lt|_ge|_gte|_gt)$/.test(key)
               const isLike = /_like$/.test(key)
@@ -245,7 +245,7 @@ module.exports = (db, name, opts) => {
     }
 
     // embed and expand
-    chain = chain.map(function(element, index, array) {
+    chain = chain.map(function (element, index, array) {
       const clone = _.cloneDeep(element)
       embed(clone, _embed)
       expand(clone, _expand)

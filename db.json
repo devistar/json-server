@@ -10,7 +10,8 @@
     { "id": 3, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
     { "id": 4, "name": "This is a news topic", "forumCategoryId": 2, "forumUserId": 2 },
     { "id": 5, "name": "This is a news topic", "forumCategoryId": 2, "forumUserId": 2 },
-    { "id": 6, "name": "This is a sport topic", "forumCategoryId": 3, "forumUserId": 2 }
+    { "id": 6, "name": "This is a sport topic", "forumCategoryId": 3, "forumUserId": 2 },
+    { "id": 7, "name": "This is a null topic", "forumCategoryId": null, "forumUserId": 2 }
   ],
   "forumPost": [
     { "id": 1, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 1 },
