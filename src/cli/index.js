@@ -68,6 +68,10 @@ module.exports = function() {
         description: 'Set foreign key suffix (e.g. _id as in post_id)',
         default: 'Id'
       },
+      pluralize: {
+        alias: 'pl',
+        description: 'Uses plural resource names'
+      },
       quiet: {
         alias: 'q',
         description: 'Suppress log messages from output'
@@ -83,6 +87,7 @@ module.exports = function() {
     .boolean('quiet')
     .boolean('no-cors')
     .boolean('no-gzip')
+    .boolean('pluralize')
     .help('help')
     .alias('help', 'h')
     .version(pkg.version)

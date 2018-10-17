@@ -12,30 +12,30 @@ module.exports = (db, name, opts) => {
   router.use(delay)
 
   // Embed function used in GET /name and GET /name/id
-  function embed(resource, e) {
+  function embed(resource, e) {    
     e &&
-      [].concat(e).forEach(externalResource => {
+      e.split(",").forEach(externalResource => {
         if (db.get(externalResource).value) {
           const query = {}
-          const singularResource = pluralize.singular(name)
-          query[`${singularResource}${opts.foreignKeySuffix}`] = resource.id
+          const embededResource = pluralize.singular(name)
+          query[`${embededResource}${opts.foreignKeySuffix}`] = resource.id
           resource[externalResource] = db
             .get(externalResource)
             .filter(query)
-            .value()
+            .value() 
         }
-      })
+      })    
   }
 
   // Expand function used in GET /name and GET /name/id
   function expand(resource, e) {
     e &&
-      [].concat(e).forEach(innerResource => {
-        const plural = pluralize(innerResource)
-        if (db.get(plural).value()) {
+      e.split(",").forEach(innerResource => {
+        const expandedResource = opts.pluralize ? pluralize(innerResource) : innerResource;
+        if (db.get(expandedResource).value()) {
           const prop = `${innerResource}${opts.foreignKeySuffix}` 
           resource[innerResource] = db
-            .get(plural)
+            .get(expandedResource)
             .getById(resource[prop])
             .value()
         }
@@ -50,7 +50,8 @@ module.exports = (db, name, opts) => {
   // GET /name?_embed=&_expand=
   function list(req, res, next) {
     // Resource chain
-    let chain = db.get(name)
+    let chain = db.get(name);
+    console.log(chain.value());
 
     // Remove q, _start, _end, ... from req.query to avoid filtering using those
     // parameters
@@ -244,9 +245,11 @@ module.exports = (db, name, opts) => {
     }
 
     // embed and expand
-    chain = chain.forEach(function(element) {
-      embed(element, _embed)
-      expand(element, _expand)
+    chain = chain.map(function(element, index, array) {
+      const clone = _.cloneDeep(element)
+      embed(clone, _embed)
+      expand(clone, _expand)
+      return clone;
     })
 
     res.locals.data = chain.value()

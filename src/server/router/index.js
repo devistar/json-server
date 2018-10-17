@@ -56,11 +56,13 @@ module.exports = (source, opts = { foreignKeySuffix: 'Id' }) => {
   db.forEach((value, key) => {
     if (_.isPlainObject(value)) {
       router.use(`/${key}`, singular(db, key))
+      router.use(`/${_.kebabCase(key)}`, singular(db, key))
       return
     }
 
     if (_.isArray(value)) {
       router.use(`/${key}`, plural(db, key, opts))
+      router.use(`/${_.kebabCase(key)}`, plural(db, key, opts))
       return
     }
 

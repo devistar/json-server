@@ -18,9 +18,10 @@ function getRemovable(db, opts) {
         if (new RegExp(`${opts.foreignKeySuffix}$`).test(key)) {
           // Remove foreign key suffix and pluralize it
           // Example postId -> posts
-          const refName = pluralize.plural(
-            key.replace(new RegExp(`${opts.foreignKeySuffix}$`), '')
-          )
+          const replaced = key.replace(new RegExp(`${opts.foreignKeySuffix}$`), '')
+          const refName = opts.pluralize ? pluralize.plural(
+            replaced
+          ) : replaced
           // Test if table exists
           if (db[refName]) {
             // Test if references is defined in table

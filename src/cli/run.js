@@ -60,6 +60,7 @@ function createApp(source, object, routes, middlewares, argv) {
     readOnly: argv.readOnly,
     noCors: argv.noCors,
     noGzip: argv.noGzip,
+    pluralize: argv.pluralize,
     bodyParser: true
   }
 

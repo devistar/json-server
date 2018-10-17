@@ -1,9 +1,28 @@
 {
-  "posts": [
-    { "id": 1, "title": "json-server", "author": "typicode" }
+  "forumCategory": [
+    { "id": 1, "name": "General" },
+    { "id": 2, "name": "News" },
+    { "id": 3, "name": "Sport" }
   ],
-  "comments": [
-    { "id": 1, "body": "some comment", "postId": 1 }
+  "forumTopic": [
+    { "id": 1, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
+    { "id": 2, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
+    { "id": 3, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
+    { "id": 4, "name": "This is a news topic", "forumCategoryId": 2, "forumUserId": 2 },
+    { "id": 5, "name": "This is a news topic", "forumCategoryId": 2, "forumUserId": 2 },
+    { "id": 6, "name": "This is a sport topic", "forumCategoryId": 3, "forumUserId": 2 }
   ],
-  "profile": { "name": "typicode" }
+  "forumPost": [
+    { "id": 1, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 1 },
+    { "id": 2, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 1 },
+    { "id": 3, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 2 },
+    { "id": 4, "name": "This is a news post", "forumTopicId": 2, "forumUserId": 2 },
+    { "id": 5, "name": "This is a news post", "forumTopicId": 2, "forumUserId": 2 },
+    { "id": 6, "name": "This is a sport post", "forumTopicId": 3, "forumUserId": 3 }
+  ],
+  "forumUser": [
+    { "id": 1, "name": "john doe" },
+    { "id": 2, "name": "jane doe" },
+    { "id": 3, "name": "jess doe" }
+  ]
 }
