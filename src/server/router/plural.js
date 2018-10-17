@@ -51,7 +51,6 @@ module.exports = (db, name, opts) => {
   function list(req, res, next) {
     // Resource chain
     let chain = db.get(name);
-    console.log(chain.value());
 
     // Remove q, _start, _end, ... from req.query to avoid filtering using those
     // parameters
