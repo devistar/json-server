@@ -72,6 +72,10 @@ module.exports = function() {
         alias: 'pl',
         description: 'Uses plural resource names'
       },
+      cascade: {
+        alias: 'ca',
+        description: 'Enable cascade delete'
+      },
       quiet: {
         alias: 'q',
         description: 'Suppress log messages from output'
@@ -88,6 +92,7 @@ module.exports = function() {
     .boolean('no-cors')
     .boolean('no-gzip')
     .boolean('pluralize')
+    .boolean('cascade')
     .help('help')
     .alias('help', 'h')
     .version(pkg.version)
