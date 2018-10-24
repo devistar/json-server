@@ -42,6 +42,16 @@ module.exports = (db, name, opts) => {
       })
   }
 
+  // Expand for a defined resource
+  function join(resource, joinResource, idValue) {
+    if (joinResource && idValue) {
+      resource[joinResource] = db
+        .get(joinResource)
+        .getById(idValue)
+        .value()
+    }
+  }
+
   // GET /name
   // GET /name?q=
   // GET /name?attr=&attr=
@@ -63,6 +73,7 @@ module.exports = (db, name, opts) => {
     let _limit = req.query._limit
     let _embed = req.query._embed
     let _expand = req.query._expand
+    let _join = req.query._join
     delete req.query.q
     delete req.query._start
     delete req.query._end
@@ -71,6 +82,7 @@ module.exports = (db, name, opts) => {
     delete req.query._limit
     delete req.query._embed
     delete req.query._expand
+    delete req.query._join
 
     // Automatically delete query parameters that can't be found
     // in the database
@@ -90,7 +102,8 @@ module.exports = (db, name, opts) => {
           /_ne$/.test(query) ||
           /_like$/.test(query) ||
           /_null$/.test(query) ||
-          /_empty$/.test(query)
+          /_empty$/.test(query) ||
+          /_join$/.test(query)
         )
           return
       }
@@ -115,10 +128,11 @@ module.exports = (db, name, opts) => {
       })
     }
 
+    // Filters
     Object.keys(req.query).forEach(key => {
       // Don't take into account JSONP query parameters
       // jQuery adds a '_' query parameter too
-      if (key !== 'callback' && key !== '_') {
+      if (key !== 'callback' && key !== '_' && !/_join$/.test(key)) {
         // Always use an array, in case req.query is an array
         const arr = [].concat(req.query[key])
 
@@ -131,7 +145,7 @@ module.exports = (db, name, opts) => {
               const isEmpty = /_is_empty$/.test(key)
               const isNull = /_is_null$/.test(key)
               const path = key.replace(
-                /(_le|_lte|_gte|_ge|_ne|_like|_is_empty|_is_null)$/,
+                /(_lt|_le|_lte|_gt|_gte|_ge|_ne|_like|_is_empty|_is_null)$/,
                 ''
               )
               // get item value based on path
@@ -166,7 +180,7 @@ module.exports = (db, name, opts) => {
               } else if (isNull) {
                 return !elementValue
               } else if (isEmpty) {
-                return elementValue && elementValue.length > 0
+                return elementValue && elementValue.length === 0
               } else if (
                 typeof elementValue !== 'undefined' &&
                 elementValue !== null
@@ -175,7 +189,7 @@ module.exports = (db, name, opts) => {
               }
             })
             .reduce((a, b) => a || b)
-        })
+        })    
       }
     })
 
@@ -194,7 +208,8 @@ module.exports = (db, name, opts) => {
         `X-Total-Count${_page ? ', Link' : ''}`
       )
     }
-
+    
+    // Pagination
     if (_page) {
       _page = parseInt(_page, 10)
       _page = _page >= 1 ? _page : 1
@@ -243,10 +258,19 @@ module.exports = (db, name, opts) => {
       chain = chain.slice(_start, _start + _limit)
     }
 
-    // embed and expand
-    chain = chain.map(function (element, index, array) {
+    // Join
+    const joinArr = Object.keys(req.query).filter(param => /_join$/.test(param))
+    chain = chain.map(function (element) {
       const clone = _.cloneDeep(element)
+      // Mapped join
+      joinArr.forEach(function(val) {
+        const joinResource = req.query[val]
+        const foreignKey = val.replace(/_join$/, '')
+        const idValue = element[foreignKey]
+        join(clone, joinResource, idValue)
+      })
       embed(clone, _embed)
+      // Auto join
       expand(clone, _expand)
       return clone;
     })

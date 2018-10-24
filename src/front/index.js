@@ -3,11 +3,12 @@ import 'whatwg-fetch'
 import { h, render } from 'preact'
 import 'milligram/dist/milligram.css'
 import './style.css'
+import _ from 'lodash'
 
 function ResourceItem({ name, length }) {
   return (
     <li>
-      <a href={name}>/{name}</a> <sup>{length ? `${length}x` : 'object'}</sup>
+      <a href={_.kebabCase(name)}>/{_.kebabCase(name)}</a> <sup>{length ? `${length}x` : 'object'}</sup>
     </li>
   )
 }
