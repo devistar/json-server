@@ -95,7 +95,6 @@ module.exports = (db, name, opts) => {
     let _limit = req.query._limit
     let _embed = req.query._embed
     let _expand = req.query._expand
-    let _join = req.query._join
     delete req.query.q
     delete req.query._start
     delete req.query._end
@@ -104,7 +103,6 @@ module.exports = (db, name, opts) => {
     delete req.query._limit
     delete req.query._embed
     delete req.query._expand
-    delete req.query._join
 
     // Automatically delete query parameters that can't be found
     // in the database
@@ -115,17 +113,17 @@ module.exports = (db, name, opts) => {
           _.has(arr[i], query) ||
           query === 'callback' ||
           query === '_' ||
-          /_lt$/.test(query) ||
-          /_gt$/.test(query) ||
-          /_le$/.test(query) ||
-          /_ge$/.test(query) ||
-          /_lte$/.test(query) ||
-          /_gte$/.test(query) ||
-          /_ne$/.test(query) ||
-          /_like$/.test(query) ||
-          /_null$/.test(query) ||
-          /_empty$/.test(query) ||
-          /_join$/.test(query)
+          /_|\.lt$/.test(query) ||
+          /_|\.gt$/.test(query) ||
+          /_|\.le$/.test(query) ||
+          /_|\.ge$/.test(query) ||
+          /_|\.lte$/.test(query) ||
+          /_|\.gte$/.test(query) ||
+          /_|\.ne$/.test(query) ||
+          /_|\.like$/.test(query) ||
+          /_|\.null$/.test(query) ||
+          /_|\.empty$/.test(query) ||
+          /_|\.join$/.test(query)
         )
           return
       }
@@ -154,20 +152,21 @@ module.exports = (db, name, opts) => {
     Object.keys(req.query).forEach(key => {
       // Don't take into account JSONP query parameters
       // jQuery adds a '_' query parameter too
-      if (key !== 'callback' && key !== '_' && !/_join$/.test(key)) {
+      if (key !== 'callback' && key !== '_' && !/_|\.join$/.test(key)) {
         // Always use an array, in case req.query is an array
         const arr = [].concat(req.query[key])
 
         chain = chain.filter(element => {
           return arr
             .map(function (value) {
-              const isDifferent = /_ne$/.test(key)
-              const isRange = /(_le|_lte|_lt|_ge|_gte|_gt)$/.test(key)
-              const isLike = /_like$/.test(key)
-              const isEmpty = /_is_empty$/.test(key)
-              const isNull = /_is_null$/.test(key)
+              const isDifferent = /_|\.ne$/.test(key)
+              const isEqual = /_|\.eq$/.test(key)
+              const isRange = /_|\.(le|lte|lt|ge|gte|gt)$/.test(key)
+              const isLike = /_|\.like$/.test(key)
+              const isEmpty = /_|\.is_empty$/.test(key)
+              const isNull = /_|\.is_null$/.test(key)
               const path = key.replace(
-                /(_lt|_le|_lte|_gt|_gte|_ge|_ne|_like|_is_empty|_is_null)$/,
+                /_|\.(lt|le|lte|gt|gte|ge|eq|ne|like|is_empty|is_null)$/,
                 ''
               )
               // get item value based on path
@@ -176,9 +175,9 @@ module.exports = (db, name, opts) => {
 
               if (isRange) {
                 const isLowerOrEqual = /(_le|_lte)$/.test(key)
-                const isLowerThan = /_lt$/.test(key)
-                const isGreaterOrEqual = /(_ge|_gte)$/.test(key)
-                const isGreaterThan = /_gt$/.test(key)
+                const isLowerThan = /_|\.lt$/.test(key)
+                const isGreaterOrEqual = /_|\.(ge|gte)$/.test(key)
+                const isGreaterThan = /_|\.gt$/.test(key)
 
                 if (isLowerOrEqual) {
                   return value >= elementValue
@@ -195,6 +194,8 @@ module.exports = (db, name, opts) => {
                 if (isGreaterThan) {
                   return value < elementValue
                 }
+              } else if (isEqual) {
+                return value === elementValue.toString()
               } else if (isDifferent) {
                 return value !== elementValue.toString()
               } else if (isLike) {
@@ -281,13 +282,13 @@ module.exports = (db, name, opts) => {
     }
 
     // Join
-    const joinArr = Object.keys(req.query).filter(param => /_join$/.test(param))
+    const joinArr = Object.keys(req.query).filter(param => /_|\.join$/.test(param))
     chain = chain.map(function (element) {
       const clone = _.cloneDeep(element)
       // Mapped join
       joinArr.forEach(function (val) {
         const joinResource = req.query[val]
-        const foreignKey = val.replace(/_join$/, '')
+        const foreignKey = val.replace(/_|\.join$/, '')
         join(clone, joinResource, foreignKey)
       })
       embed(clone, _embed)
