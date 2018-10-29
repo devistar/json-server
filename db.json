@@ -5,21 +5,21 @@
     { "id": 3, "name": "Sport" }
   ],
   "forumTopic": [
-    { "id": 1, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
-    { "id": 2, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
-    { "id": 3, "name": "This is a general topic", "forumCategoryId": 1, "forumUserId": 1 },
-    { "id": 4, "name": "This is a news topic", "forumCategoryId": 2, "forumUserId": 2 },
-    { "id": 5, "name": "This is a news topic", "forumCategoryId": 2, "forumUserId": 2 },
-    { "id": 6, "name": "This is a sport topic", "forumCategoryId": 3, "forumUserId": 2 },
-    { "id": 7, "name": "This is a null topic", "forumCategoryId": null, "forumUserId": 2 }
+    { "id": 1, "name": "This is a general topic", "categoryId": 1, "userId": 1 },
+    { "id": 2, "name": "This is a general topic", "categoryId": 1, "userId": 1 },
+    { "id": 3, "name": "This is a general topic", "categoryId": 1, "userId": 1 },
+    { "id": 4, "name": "This is a news topic", "categoryId": 2, "userId": 2 },
+    { "id": 5, "name": "This is a news topic", "categoryId": 2, "userId": 2 },
+    { "id": 6, "name": "This is a sport topic", "categoryId": 3, "userId": 2 },
+    { "id": 7, "name": "This is a null topic", "categoryId": null, "userId": 2 }
   ],
   "forumPost": [
-    { "id": 1, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 1 },
-    { "id": 2, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 1 },
-    { "id": 3, "name": "This is a general post", "forumTopicId": 1, "forumUserId": 2 },
-    { "id": 4, "name": "This is a news post", "forumTopicId": 2, "forumUserId": 2 },
-    { "id": 5, "name": "This is a news post", "forumTopicId": 2, "forumUserId": 2 },
-    { "id": 6, "name": "This is a sport post", "forumTopicId": 3, "forumUserId": 3 }
+    { "id": 1, "name": "This is a general post", "topicId": 1, "userId": 1 },
+    { "id": 2, "name": "This is a general post", "topicId": 1, "userId": 1 },
+    { "id": 3, "name": "This is a general post", "topicId": 1, "userId": 2 },
+    { "id": 4, "name": "This is a news post", "topicId": 2, "userId": 2 },
+    { "id": 5, "name": "This is a news post", "topicId": 2, "userId": 2 },
+    { "id": 6, "name": "This is a sport post", "topicId": 3, "userId": 3 }
   ],
   "forumUser": [
     { "id": 1, "name": "john doe" },

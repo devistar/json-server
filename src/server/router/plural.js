@@ -12,43 +12,65 @@ module.exports = (db, name, opts) => {
   router.use(delay)
 
   // Embed function used in GET /name and GET /name/id
+  // _embed=(schema.)entity,...
   function embed(resource, e) {
-    e &&
-      e.split(",").forEach(externalResource => {
-        if (db.get(externalResource).value) {
+    if (resource && e) {
+      let split = _.split(_.kebabCase(name), '-')
+      const resourceSchema = split.length > 1 ? split[0] : undefined
+      const resourceName = split.length > 1 ?
+        _.camelCase(_.join(_.drop(split), '-'))
+        : split[0]
+      e.split(",").forEach(embedResource => {
+        split = _.split(embedResource, '.')
+        const embedSchema = split.length === 1 ? resourceSchema : split[0]
+        const embedName = split.length > 1 ? split[1] : split[0]
+        let embedFullName = _.camelCase(_.join([embedSchema, '-', embedName], ''))
+        embedFullName = opts.pluralize ? pluralize(embedFullName) : embedFullName
+        if (db.get(embedFullName).value) {
           const query = {}
-          const embededResource = pluralize.singular(name)
-          query[`${embededResource}${opts.foreignKeySuffix}`] = resource.id
-          resource[externalResource] = db
-            .get(externalResource)
+          query[`${resourceName}${opts.foreignKeySuffix}`] = resource.id
+          resource[embedName] = db
+            .get(embedFullName)
             .filter(query)
             .value()
         }
       })
+    }
   }
 
   // Expand function used in GET /name and GET /name/id
+  // _expand=(schema.)entity,...
+  // default foreign key: entityId
   function expand(resource, e) {
-    e &&
-      e.split(",").forEach(innerResource => {
-        const expandedResource = opts.pluralize ? pluralize(innerResource) : innerResource;
-        if (db.get(expandedResource).value()) {
-          const fk = `${innerResource}${opts.foreignKeySuffix}`
-          resource[innerResource] = resource[fk] ? db
-            .get(expandedResource)
-            .getById(resource[fk])
-            .value() : {}
-        }
+    if (resource, e) {
+      e.split(",").forEach(joinResource => {
+        const split = _.split(joinResource, '.')
+        const joinName = split.length > 1 ? split[1] : split[0]
+        const foreignKey = `${joinName}${opts.foreignKeySuffix}`
+        join(resource, joinResource, foreignKey)
       })
+    }
   }
 
   // Expand for a defined resource
-  function join(resource, joinResource, idValue) {
-    if (joinResource && idValue) {
-      resource[joinResource] = db
-        .get(joinResource)
-        .getById(idValue)
-        .value()
+  // fkColumn_join=(schema.)entity
+  // schema is optional, if undefined it uses resource schema.
+  function join(resource, joinResource, foreignKey) {
+    if (resource && joinResource && foreignKey) {
+      let split = _.split(_.kebabCase(name), '-')
+      const schema = split.length > 1 ? split[0] : undefined
+      split = _.split(joinResource, '.')
+      const joinSchema = split.length === 1 ? schema : split[0]
+      const joinName = split.length > 1 ? split[1] : split[0]
+      let joinFullName = _.camelCase(_.join([joinSchema, '-', joinName], ''))
+      joinFullName = opts.pluralize ? pluralize(joinFullName) : joinFullName
+      const fkValue = resource[foreignKey]
+      if (joinName && joinFullName && fkValue) {
+        resource[joinName] = db
+          .get(joinFullName)
+          .getById(fkValue)
+          .value()
+      }
     }
   }
 
@@ -189,7 +211,7 @@ module.exports = (db, name, opts) => {
               }
             })
             .reduce((a, b) => a || b)
-        })    
+        })
       }
     })
 
@@ -208,7 +230,7 @@ module.exports = (db, name, opts) => {
         `X-Total-Count${_page ? ', Link' : ''}`
       )
     }
-    
+
     // Pagination
     if (_page) {
       _page = parseInt(_page, 10)
@@ -263,11 +285,10 @@ module.exports = (db, name, opts) => {
     chain = chain.map(function (element) {
       const clone = _.cloneDeep(element)
       // Mapped join
-      joinArr.forEach(function(val) {
+      joinArr.forEach(function (val) {
         const joinResource = req.query[val]
         const foreignKey = val.replace(/_join$/, '')
-        const idValue = element[foreignKey]
-        join(clone, joinResource, idValue)
+        join(clone, joinResource, foreignKey)
       })
       embed(clone, _embed)
       // Auto join
