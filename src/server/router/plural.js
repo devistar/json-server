@@ -123,6 +123,7 @@ module.exports = (db, name, opts) => {
           /_|\.like$/.test(query) ||
           /_|\.null$/.test(query) ||
           /_|\.empty$/.test(query) ||
+          /_|\.sort$/.test(query) ||
           /_|\.join$/.test(query)
         )
           return
@@ -152,7 +153,7 @@ module.exports = (db, name, opts) => {
     Object.keys(req.query).forEach(key => {
       // Don't take into account JSONP query parameters
       // jQuery adds a '_' query parameter too
-      if (key !== 'callback' && key !== '_' && !/_|\.join$/.test(key)) {
+      if (key !== 'callback' && key !== '_' && !/_|\.(join|sort)$/.test(key)) {
         // Always use an array, in case req.query is an array
         const arr = [].concat(req.query[key])
 
@@ -216,11 +217,22 @@ module.exports = (db, name, opts) => {
       }
     })
 
-    // Sort
+    // Sort 
     if (_sort) {
       const _sortSet = _sort.split(',')
       const _orderSet = (_order || '').split(',').map(s => s.toLowerCase())
       chain = chain.orderBy(_sortSet, _orderSet)
+    } else {
+      // Alternative for sorting
+      const sortArr = Object.keys(req.query).filter(param => /_|\.sort$/.test(param))
+      sortArr.forEach(function (value) {
+        const _sortSet = []
+        const _orderSet = []
+        _sortSet.push(value.replace(/_|\.sort$/, ''))
+        _orderSet.push(req.query[value])
+        console.log({ _sortSet, _orderSet });
+        chain = chain.orderBy(_sortSet, _orderSet)
+      })
     }
 
     // Slice result
