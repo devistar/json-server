@@ -1,5 +1,5 @@
 {
-  "name": "my-json-server",
+  "name": "json-server",
   "version": "0.15.0",
   "description": "Serves JSON files through REST routes.",
   "main": "./lib/server/index.js",
@@ -88,7 +88,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/typicode/json-server.git"
+    "url": "git://github.com/devistar/json-server.git"
   },
   "keywords": [
     "JSON",
@@ -106,12 +106,12 @@
     "dummy",
     "sandbox"
   ],
-  "author": "Typicode <typicode@gmail.com>",
+  "author": "devistar <devistar@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/typicode/json-server/issues"
+    "url": "https://github.com/devistar/json-server/issues"
   },
-  "homepage": "https://github.com/typicode/json-server",
+  "homepage": "https://github.com/devistar/json-server",
   "engines": {
     "node": ">=6"
   },
