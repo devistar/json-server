@@ -113,13 +113,14 @@ module.exports = (db, name, opts) => {
           _.has(arr[i], query) ||
           query === 'callback' ||
           query === '_' ||
+          /_|\.eq$/.test(query) ||
+          /_|\.ne$/.test(query) ||
           /_|\.lt$/.test(query) ||
           /_|\.gt$/.test(query) ||
           /_|\.le$/.test(query) ||
           /_|\.ge$/.test(query) ||
           /_|\.lte$/.test(query) ||
-          /_|\.gte$/.test(query) ||
-          /_|\.ne$/.test(query) ||
+          /_|\.gte$/.test(query) ||          
           /_|\.like$/.test(query) ||
           /_|\.null$/.test(query) ||
           /_|\.empty$/.test(query) ||
@@ -160,14 +161,14 @@ module.exports = (db, name, opts) => {
         chain = chain.filter(element => {
           return arr
             .map(function (value) {
-              const isDifferent = /_|\.ne$/.test(key)
               const isEqual = /_|\.eq$/.test(key)
+              const isDifferent = /_|\.ne$/.test(key)
               const isRange = /_|\.(le|lte|lt|ge|gte|gt)$/.test(key)
               const isLike = /_|\.like$/.test(key)
               const isEmpty = /_|\.is_empty$/.test(key)
               const isNull = /_|\.is_null$/.test(key)
               const path = key.replace(
-                /_|\.(lt|le|lte|gt|gte|ge|eq|ne|like|is_empty|is_null)$/,
+                /_|\.(eq|ne|lt|le|lte|gt|gte|ge|like|is_empty|is_null)$/,
                 ''
               )
               // get item value based on path
@@ -230,7 +231,6 @@ module.exports = (db, name, opts) => {
         const _orderSet = []
         _sortSet.push(value.replace(/_|\.sort$/, ''))
         _orderSet.push(req.query[value])
-        console.log({ _sortSet, _orderSet });
         chain = chain.orderBy(_sortSet, _orderSet)
       })
     }
