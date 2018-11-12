@@ -120,7 +120,7 @@ module.exports = (db, name, opts) => {
           /(_|\.)le$/.test(query) ||
           /(_|\.)ge$/.test(query) ||
           /(_|\.)lte$/.test(query) ||
-          /(_|\.)gte$/.test(query) ||          
+          /(_|\.)gte$/.test(query) ||
           /(_|\.)like$/.test(query) ||
           /(_|\.)null$/.test(query) ||
           /(_|\.)empty$/.test(query) ||
@@ -174,43 +174,41 @@ module.exports = (db, name, opts) => {
               // get item value based on path
               // i.e post.title -> 'foo'
               const elementValue = _.get(element, path)
+              const hasElementValue = typeof elementValue !== 'undefined' && elementValue !== null;
+
+              if (isNull) {
+                return !hasElementValue;
+              }
 
               if (isRange) {
-                const isLowerOrEqual = /(_|\.)(le|lte)$/.test(key)
-                const isLowerThan = /(_|\.)lt$/.test(key)
-                const isGreaterOrEqual = /(_|\.)(ge|gte)$/.test(key)
-                const isGreaterThan = /(_|\.)gt$/.test(key)
+                const isLowerOrEqual = /(_|\.)(le|lte)$/.test(key);
+                const isLowerThan = /(_|\.)lt$/.test(key);
+                const isGreaterOrEqual = /(_|\.)(ge|gte)$/.test(key);
+                const isGreaterThan = /(_|\.)gt$/.test(key);
 
                 if (isLowerOrEqual) {
-                  return value >= elementValue
+                  return value >= elementValue;
+                } else if (isLowerThan) {
+                  return value > elementValue;
+                } else if (isGreaterOrEqual) {
+                  return value <= elementValue;
+                } else if (isGreaterThan) {
+                  return value < elementValue;
                 }
+              }
 
-                if (isLowerThan) {
-                  return value > elementValue
+              if (hasElementValue) {
+                if (isEqual) {
+                  return value === elementValue.toString();
+                } else if (isDifferent) {
+                  return value !== elementValue.toString();
+                } else if (isLike) {
+                  return new RegExp(value, 'i').test(elementValue.toString());
+                } else if (isEmpty) {
+                  return elementValue.length === 0;
+                } else {
+                  return value === elementValue.toString();
                 }
-
-                if (isGreaterOrEqual) {
-                  return value <= elementValue
-                }
-
-                if (isGreaterThan) {
-                  return value < elementValue
-                }
-              } else if (isEqual) {
-                return value === elementValue.toString()
-              } else if (isDifferent) {
-                return value !== elementValue.toString()
-              } else if (isLike) {
-                return new RegExp(value, 'i').test(elementValue.toString())
-              } else if (isNull) {
-                return !elementValue
-              } else if (isEmpty) {
-                return elementValue && elementValue.length === 0
-              } else if (
-                typeof elementValue !== 'undefined' &&
-                elementValue !== null
-              ) {
-                return value === elementValue.toString()
               }
             })
             .reduce((a, b) => a || b)
