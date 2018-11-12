@@ -113,19 +113,19 @@ module.exports = (db, name, opts) => {
           _.has(arr[i], query) ||
           query === 'callback' ||
           query === '_' ||
-          /_|\.eq$/.test(query) ||
-          /_|\.ne$/.test(query) ||
-          /_|\.lt$/.test(query) ||
-          /_|\.gt$/.test(query) ||
-          /_|\.le$/.test(query) ||
-          /_|\.ge$/.test(query) ||
-          /_|\.lte$/.test(query) ||
-          /_|\.gte$/.test(query) ||          
-          /_|\.like$/.test(query) ||
-          /_|\.null$/.test(query) ||
-          /_|\.empty$/.test(query) ||
-          /_|\.sort$/.test(query) ||
-          /_|\.join$/.test(query)
+          /(_|\.)eq$/.test(query) ||
+          /(_|\.)ne$/.test(query) ||
+          /(_|\.)lt$/.test(query) ||
+          /(_|\.)gt$/.test(query) ||
+          /(_|\.)le$/.test(query) ||
+          /(_|\.)ge$/.test(query) ||
+          /(_|\.)lte$/.test(query) ||
+          /(_|\.)gte$/.test(query) ||          
+          /(_|\.)like$/.test(query) ||
+          /(_|\.)null$/.test(query) ||
+          /(_|\.)empty$/.test(query) ||
+          /(_|\.)sort$/.test(query) ||
+          /(_|\.)join$/.test(query)
         )
           return
       }
@@ -154,21 +154,21 @@ module.exports = (db, name, opts) => {
     Object.keys(req.query).forEach(key => {
       // Don't take into account JSONP query parameters
       // jQuery adds a '_' query parameter too
-      if (key !== 'callback' && key !== '_' && !/_|\.(join|sort)$/.test(key)) {
+      if (key !== 'callback' && key !== '_' && !/(_|\.)(join|sort)$/.test(key)) {
         // Always use an array, in case req.query is an array
         const arr = [].concat(req.query[key])
 
         chain = chain.filter(element => {
           return arr
             .map(function (value) {
-              const isEqual = /_|\.eq$/.test(key)
-              const isDifferent = /_|\.ne$/.test(key)
-              const isRange = /_|\.(le|lte|lt|ge|gte|gt)$/.test(key)
-              const isLike = /_|\.like$/.test(key)
-              const isEmpty = /_|\.is_empty$/.test(key)
-              const isNull = /_|\.is_null$/.test(key)
+              const isEqual = /(_|\.)eq$/.test(key)
+              const isDifferent = /(_|\.)ne$/.test(key)
+              const isRange = /(_|\.)(le|lte|lt|ge|gte|gt)$/.test(key)
+              const isLike = /(_|\.)like$/.test(key)
+              const isEmpty = /(_|\.)is_empty$/.test(key)
+              const isNull = /(_|\.)is_null$/.test(key)
               const path = key.replace(
-                /_|\.(eq|ne|lt|le|lte|gt|gte|ge|like|is_empty|is_null)$/,
+                /(_|\.)(eq|ne|lt|le|lte|gt|gte|ge|like|is_empty|is_null)$/,
                 ''
               )
               // get item value based on path
@@ -176,10 +176,10 @@ module.exports = (db, name, opts) => {
               const elementValue = _.get(element, path)
 
               if (isRange) {
-                const isLowerOrEqual = /(_le|_lte)$/.test(key)
-                const isLowerThan = /_|\.lt$/.test(key)
-                const isGreaterOrEqual = /_|\.(ge|gte)$/.test(key)
-                const isGreaterThan = /_|\.gt$/.test(key)
+                const isLowerOrEqual = /(_|\.)(le|lte)$/.test(key)
+                const isLowerThan = /(_|\.)lt$/.test(key)
+                const isGreaterOrEqual = /(_|\.)(ge|gte)$/.test(key)
+                const isGreaterThan = /(_|\.)gt$/.test(key)
 
                 if (isLowerOrEqual) {
                   return value >= elementValue
@@ -225,11 +225,11 @@ module.exports = (db, name, opts) => {
       chain = chain.orderBy(_sortSet, _orderSet)
     } else {
       // Alternative for sorting
-      const sortArr = Object.keys(req.query).filter(param => /_|\.sort$/.test(param))
+      const sortArr = Object.keys(req.query).filter(param => /(_|\.)sort$/.test(param))
       sortArr.forEach(function (value) {
         const _sortSet = []
         const _orderSet = []
-        _sortSet.push(value.replace(/_|\.sort$/, ''))
+        _sortSet.push(value.replace(/(_|\.)sort$/, ''))
         _orderSet.push(req.query[value])
         chain = chain.orderBy(_sortSet, _orderSet)
       })
@@ -294,13 +294,13 @@ module.exports = (db, name, opts) => {
     }
 
     // Join
-    const joinArr = Object.keys(req.query).filter(param => /_|\.join$/.test(param))
+    const joinArr = Object.keys(req.query).filter(param => /(_|\.)join$/.test(param))
     chain = chain.map(function (element) {
       const clone = _.cloneDeep(element)
       // Mapped join
       joinArr.forEach(function (val) {
         const joinResource = req.query[val]
-        const foreignKey = val.replace(/_|\.join$/, '')
+        const foreignKey = val.replace(/(_|\.)join$/, '')
         join(clone, joinResource, foreignKey)
       })
       embed(clone, _embed)
