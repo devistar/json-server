@@ -123,7 +123,8 @@ module.exports = (db, name, opts) => {
     // Automatically delete query parameters that can't be found
     // in the database
     Object.keys(req.query).forEach(query => {
-      const arr = db.get(name).value()
+      // const arr = db.get(name).value()
+      const arr = chain.value();
       for (let i in arr) {
         if (
           _.has(arr[i], query) ||
