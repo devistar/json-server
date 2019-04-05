@@ -104,6 +104,22 @@ module.exports = (db, name, opts) => {
     delete req.query._embed
     delete req.query._expand
 
+    // Join
+    const joinArr = Object.keys(req.query).filter(param => /(_|\.)join$/.test(param))
+    chain = chain.map(function (element) {
+      const clone = _.cloneDeep(element)
+      // Mapped join
+      joinArr.forEach(function (val) {
+        const joinResource = req.query[val]
+        const foreignKey = val.replace(/(_|\.)join$/, '')
+        join(clone, joinResource, foreignKey)
+      })
+      embed(clone, _embed)
+      // Auto join
+      expand(clone, _expand)
+      return clone;
+    })
+
     // Automatically delete query parameters that can't be found
     // in the database
     Object.keys(req.query).forEach(query => {
@@ -290,22 +306,6 @@ module.exports = (db, name, opts) => {
       _limit = parseInt(_limit, 10)
       chain = chain.slice(_start, _start + _limit)
     }
-
-    // Join
-    const joinArr = Object.keys(req.query).filter(param => /(_|\.)join$/.test(param))
-    chain = chain.map(function (element) {
-      const clone = _.cloneDeep(element)
-      // Mapped join
-      joinArr.forEach(function (val) {
-        const joinResource = req.query[val]
-        const foreignKey = val.replace(/(_|\.)join$/, '')
-        join(clone, joinResource, foreignKey)
-      })
-      embed(clone, _embed)
-      // Auto join
-      expand(clone, _expand)
-      return clone;
-    })
 
     res.locals.data = chain.value()
     next()
