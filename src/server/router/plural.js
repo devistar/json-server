@@ -92,6 +92,7 @@ module.exports = (db, name, opts) => {
     let _page = req.query._page
     let _sort = req.query._sort
     let _order = req.query._order
+    let _group = req.query._group
     let _limit = req.query._limit
     let _embed = req.query._embed
     let _expand = req.query._expand
@@ -100,6 +101,7 @@ module.exports = (db, name, opts) => {
     delete req.query._end
     delete req.query._sort
     delete req.query._order
+    delete req.query._group
     delete req.query._limit
     delete req.query._embed
     delete req.query._expand
@@ -250,6 +252,24 @@ module.exports = (db, name, opts) => {
       })
     }
 
+    // Group
+    if (_group) {
+      if (!_group || _group.length === 0) return;
+      const arr = chain.value();
+      if (arr.find(e => _.get(e, _group))) {
+        chain = chain
+          .reduce(function (r, a) {
+            const groupValue = _.get(a, _group);
+            r[groupValue] = r[groupValue] || [];
+            r[groupValue].push(a);
+            return r;
+          }, Object.create(null))
+          .transform((result, value, key) => {
+            result.push({ group: key, data: value });
+          }, [])
+      }
+    }
+  
     // Slice result
     if (_end || _limit || _page) {
       res.setHeader('X-Total-Count', chain.size())
