@@ -1,25 +1,30 @@
 {
+  "blogArticle": [
+    { "id": 1, "name": "This is a general article", "topicId": 3 },
+    { "id": 2, "name": "This is a news article", "topicId": 5 },
+    { "id": 3, "name": "This is a posrt article", "topicId": 6 }
+  ],
   "forumCategory": [
     { "id": 1, "name": "General" },
     { "id": 2, "name": "News" },
     { "id": 3, "name": "Sport" }
   ],
   "forumTopic": [
-    { "id": 1, "name": "This is a general topic", "categoryId": 1, "userId": 1 },
-    { "id": 2, "name": "This is a general topic", "categoryId": 1, "userId": 1 },
-    { "id": 3, "name": "This is a general topic", "categoryId": 1, "userId": 1 },
-    { "id": 4, "name": "This is a news topic", "categoryId": 2, "userId": 2 },
-    { "id": 5, "name": "This is a news topic", "categoryId": 2, "userId": 2 },
-    { "id": 6, "name": "This is a sport topic", "categoryId": 3, "userId": 2 },
-    { "id": 7, "name": "This is a null topic", "categoryId": null, "userId": 2 }
+    { "id": 1, "name": "This is a general topic", "categoryId": 1, "creatorId": 1 },
+    { "id": 2, "name": "This is a general topic", "categoryId": 1, "creatorId": 1 },
+    { "id": 3, "name": "This is a general topic", "categoryId": 1, "creatorId": 1 },
+    { "id": 4, "name": "This is a news topic", "categoryId": 2, "creatorId": 2 },
+    { "id": 5, "name": "This is a news topic", "categoryId": 2, "creatorId": 2 },
+    { "id": 6, "name": "This is a sport topic", "categoryId": 3, "creatorId": 2 },
+    { "id": 7, "name": "This is a null topic", "categoryId": null, "creatorId": 2 }
   ],
   "forumPost": [
-    { "id": 1, "name": "This is a general post", "topicId": 1, "userId": 1 },
-    { "id": 2, "name": "This is a general post", "topicId": 1, "userId": 1 },
-    { "id": 3, "name": "This is a general post", "topicId": 1, "userId": 2 },
-    { "id": 4, "name": "This is a news post", "topicId": 2, "userId": 2 },
-    { "id": 5, "name": "This is a news post", "topicId": 2, "userId": 2 },
-    { "id": 6, "name": "This is a sport post", "topicId": 3, "userId": 3 }
+    { "id": 1, "name": "This is a general post", "topicId": 1, "creatorId": 1 },
+    { "id": 2, "name": "This is a general post", "topicId": 1, "creatorId": 1 },
+    { "id": 3, "name": "This is a general post", "topicId": 1, "creatorId": 2 },
+    { "id": 4, "name": "This is a news post", "topicId": 2, "creatorId": 2 },
+    { "id": 5, "name": "This is a news post", "topicId": 2, "creatorId": 2 },
+    { "id": 6, "name": "This is a sport post", "topicId": 3, "creatorId": 3 }
   ],
   "forumUser": [
     { "id": 1, "name": "john doe" },

@@ -10,67 +10,73 @@ module.exports = (db, name, opts) => {
   // Create router
   const router = express.Router()
   router.use(delay)
+  const endpoint = parseEndpoint(name);
+
+  // Extract the schema name. Example: if name is a-b, "a" is considered as schema name.
+  function parseEndpoint(name) {
+    const nameSplit = _.split(_.kebabCase(name), '-');
+    const result = {};
+
+    if (nameSplit.length > 1) {
+      result.schema = nameSplit[0];
+      nameSplit.shift();
+      result.entity = _.camelCase(nameSplit.join('-'));      
+    } else {
+      result.entity = _.camelCase(nameSplit.join('-'));  
+    }    
+
+    return result;
+  }
+
+  // Get endpoint with schema and optionnaly pluralized.
+  function getEndpoint(resource, schema) {
+    let _endpoint = schema ? `${schema}-${resource}` : `resource`;
+    _endpoint = _.camelCase(_endpoint);
+    _endpoint = opts.pluralize ? pluralize(_endpoint) : _endpoint;
+    return _endpoint;
+  }
+
+  // Get foreign key according to opts.foreignKeySuffix
+  function getForeignKey(resource) {
+    return `${resource}${opts.foreignKeySuffix}`;
+  }
 
   // Embed function used in GET /name and GET /name/id
-  // _embed=(schema.)entity,...
-  function embed(resource, e) {
-    if (resource && e) {
-      let split = _.split(_.kebabCase(name), '-')
-      const resourceSchema = split.length > 1 ? split[0] : undefined
-      const resourceName = split.length > 1 ?
-        _.camelCase(_.join(_.drop(split), '-'))
-        : split[0]
-      e.split(",").forEach(embedResource => {
-        split = _.split(embedResource, '.')
-        const embedSchema = split.length === 1 ? resourceSchema : split[0]
-        const embedName = split.length > 1 ? split[1] : split[0]
-        let embedFullName = _.camelCase(_.join([embedSchema, '-', embedName], ''))
-        embedFullName = opts.pluralize ? pluralize(embedFullName) : embedFullName
-        if (db.get(embedFullName).value) {
-          const query = {}
-          query[`${resourceName}${opts.foreignKeySuffix}`] = resource.id
-          resource[embedName] = db
-            .get(embedFullName)
-            .filter(query)
-            .value()
-        }
-      })
+  function embed(resource, entity, schema = {}, alias = {}) {
+    if (!(resource && entity)) return;
+
+    const join = {};
+    join.entity = alias[entity] || entity;
+    join.schema = schema[entity] || schema['default'];
+    join.endpoint = getEndpoint(join.entity, join.schema);
+    join.foreignKey = getForeignKey(endpoint.entity);
+    join.foreignKeyValue = resource.id;
+
+    if (db.get(join.endpoint).value) {
+      const query = { [join.foreignKey] : join.foreignKeyValue }
+      resource[join.entity] = db
+        .get(join.endpoint)
+        .filter(query)
+        .value()
     }
   }
 
   // Expand function used in GET /name and GET /name/id
-  // _expand=(schema.)entity,...
-  // default foreign key: entityId
-  function expand(resource, e) {
-    if (resource, e) {
-      e.split(",").forEach(joinResource => {
-        const split = _.split(joinResource, '.')
-        const joinName = split.length > 1 ? split[1] : split[0]
-        const foreignKey = `${joinName}${opts.foreignKeySuffix}`
-        join(resource, joinResource, foreignKey)
-      })
-    }
-  }
+  function expand(resource, entity, schema = {}, alias = {}) {
+    if (!(resource && entity)) return;
 
-  // Expand for a defined resource
-  // fkColumn_join=(schema.)entity
-  // schema is optional, if undefined it uses resource schema.
-  function join(resource, joinResource, foreignKey) {
-    if (resource && joinResource && foreignKey) {
-      let split = _.split(_.kebabCase(name), '-')
-      const schema = split.length > 1 ? split[0] : undefined
-      split = _.split(joinResource, '.')
-      const joinSchema = split.length === 1 ? schema : split[0]
-      const joinName = split.length > 1 ? split[1] : split[0]
-      let joinFullName = _.camelCase(_.join([joinSchema, '-', joinName], ''))
-      joinFullName = opts.pluralize ? pluralize(joinFullName) : joinFullName
-      const fkValue = resource[foreignKey]
-      if (joinName && joinFullName && fkValue) {
-        resource[joinName] = db
-          .get(joinFullName)
-          .getById(fkValue)
-          .value()
-      }
+    const join = {};
+    join.entity = alias[entity] || entity;
+    join.schema = schema[entity] || schema['default'];
+    join.endpoint = getEndpoint(join.entity, join.schema);
+    join.foreignKey = getForeignKey(entity);
+    join.foreignKeyValue = resource[join.foreignKey];
+
+    if (db.get(join.endpoint).value && join.foreignKeyValue) {
+      resource[entity] = db
+        .get(join.endpoint)
+        .getById(join.foreignKeyValue)
+        .value()
     }
   }
 
@@ -83,6 +89,7 @@ module.exports = (db, name, opts) => {
   function list(req, res, next) {
     // Resource chain
     let chain = db.get(name);
+    let alias = {}, schema = {};
 
     // Remove q, _start, _end, ... from req.query to avoid filtering using those
     // parameters
@@ -96,6 +103,8 @@ module.exports = (db, name, opts) => {
     let _limit = req.query._limit
     let _embed = req.query._embed
     let _expand = req.query._expand
+    let _alias = req.query._alias
+    let _schema = req.query._schema
     delete req.query.q
     delete req.query._start
     delete req.query._end
@@ -105,23 +114,70 @@ module.exports = (db, name, opts) => {
     delete req.query._limit
     delete req.query._embed
     delete req.query._expand
+    delete req.query._alias
+    delete req.query._schema
 
-    // Join
-    const joinArr = Object.keys(req.query).filter(param => /(_|\.)join$/.test(param))
+    // Get and store alias pairs
+    if (_alias) {
+      _alias.split(',').forEach(pair => {
+        let key, value;
+        [key, value] = pair.split(':');
+        if (!(key && value)) return;
+        alias[key] = value;
+      })
+    }
+
+    // Get and store schema pairs
+    if (_schema) {
+      _schema.split(',').forEach(pair => {
+        let key, value;
+        [key, value] = pair.split(':');
+        if (!key || !value) return;
+        schema[key] = value;
+      })
+    }
+
+    // Get default schema from query or get it from name
+    schema['default'] = schema['default'] || endpoint.schema;
+
+    // Relations: expand and embed
     chain = chain.map(function (element) {
       const clone = _.cloneDeep(element)
-      // Mapped join
-      joinArr.forEach(function (val) {
-        const joinResource = req.query[val]
-        const foreignKey = val.replace(/(_|\.)join$/, '')
-        join(clone, joinResource, foreignKey)
-      })
-      embed(clone, _embed)
-      // Auto join
-      expand(clone, _expand)
+
+      if (_embed) {
+        _embed.split(',').forEach(entity => {
+          embed(clone, entity, schema, alias)
+        })
+      }
+
+      if (_expand) {
+        _expand.split(',').forEach(entity => {
+          expand(clone, entity, schema, alias)
+        })
+      }
+
       return clone;
     })
 
+    // Full-text search
+    if (q) {
+      if (Array.isArray(q)) {
+        q = q[0]
+      }
+
+      q = q.toLowerCase()
+
+      chain = chain.filter(obj => {
+        for (let key in obj) {
+          const value = obj[key]
+          if (db._.deepQuery(value, q)) {
+            return true
+          }
+        }
+      })
+    }
+
+    // Filters
     // Automatically delete query parameters that can't be found
     // in the database
     Object.keys(req.query).forEach(query => {
@@ -143,37 +199,17 @@ module.exports = (db, name, opts) => {
           /(_|\.)like$/.test(query) ||
           /(_|\.)null$/.test(query) ||
           /(_|\.)empty$/.test(query) ||
-          /(_|\.)sort$/.test(query) ||
-          /(_|\.)join$/.test(query)
+          /(_|\.)sort$/.test(query)
         )
           return
       }
       delete req.query[query]
     })
-
-    if (q) {
-      // Full-text search
-      if (Array.isArray(q)) {
-        q = q[0]
-      }
-
-      q = q.toLowerCase()
-
-      chain = chain.filter(obj => {
-        for (let key in obj) {
-          const value = obj[key]
-          if (db._.deepQuery(value, q)) {
-            return true
-          }
-        }
-      })
-    }
-
-    // Filters
+    // Apply filters
     Object.keys(req.query).forEach(key => {
       // Don't take into account JSONP query parameters
       // jQuery adds a '_' query parameter too
-      if (key !== 'callback' && key !== '_' && !/(_|\.)(join|sort)$/.test(key)) {
+      if (key !== 'callback' && key !== '_' && !/(_|\.)(sort)$/.test(key)) {
         // Always use an array, in case req.query is an array
         const arr = [].concat(req.query[key])
 
@@ -269,7 +305,7 @@ module.exports = (db, name, opts) => {
           }, [])
       }
     }
-  
+
     // Slice result
     if (_end || _limit || _page) {
       res.setHeader('X-Total-Count', chain.size())
