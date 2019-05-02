@@ -4,10 +4,15 @@
     { "id": 2, "name": "This is a news article", "topicId": 5 },
     { "id": 3, "name": "This is a posrt article", "topicId": 6 }
   ],
+  "forumSection": [
+    { "id": 1, "name": "Section A" },
+    { "id": 2, "name": "Section B" },
+    { "id": 3, "name": "Section C" }
+  ],
   "forumCategory": [
-    { "id": 1, "name": "General" },
-    { "id": 2, "name": "News" },
-    { "id": 3, "name": "Sport" }
+    { "id": 1, "name": "General", "sectionId": 1 },
+    { "id": 2, "name": "News", "sectionId": 1 },
+    { "id": 3, "name": "Sport", "sectionId": 2 }
   ],
   "forumTopic": [
     { "id": 1, "name": "This is a general topic", "categoryId": 1, "creatorId": 1 },

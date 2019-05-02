@@ -20,20 +20,44 @@ module.exports = (db, name, opts) => {
     if (nameSplit.length > 1) {
       result.schema = nameSplit[0];
       nameSplit.shift();
-      result.entity = _.camelCase(nameSplit.join('-'));      
+      result.entity = _.camelCase(nameSplit.join('-'));
     } else {
-      result.entity = _.camelCase(nameSplit.join('-'));  
-    }    
+      result.entity = _.camelCase(nameSplit.join('-'));
+    }
 
     return result;
   }
 
   // Get endpoint with schema and optionnaly pluralized.
   function getEndpoint(resource, schema) {
-    let _endpoint = schema ? `${schema}-${resource}` : `resource`;
+    let _endpoint = schema ? `${schema}-${_.last(resource.split('.'))}` : `resource`;
     _endpoint = _.camelCase(_endpoint);
     _endpoint = opts.pluralize ? pluralize(_endpoint) : _endpoint;
     return _endpoint;
+  }
+
+  function getEntity(entity) {
+    if (!entity) return;
+    return _.last(entity.split('.'));
+  }
+
+  function getEmbedForeignKeyValue(resource, entity) {
+    if (!entity) return resource.id;
+    const split = entity.split('.');
+    if (split.length > 1) {
+      split.pop();
+      const path = `${split.join('.')}${opts.foreignKeySuffix}`;
+      return _.get(resource, path)
+    } else {
+      return resource.id;
+    }
+  }
+
+  function getEmbedForeignKey(entity) {
+    if (!entity) return;
+    const split = entity.split('.');
+    if (split.length < 2) return;
+    return `${split[split.length - 2]}${opts.foreignKeySuffix}`;
   }
 
   // Get foreign key according to opts.foreignKeySuffix
@@ -46,18 +70,20 @@ module.exports = (db, name, opts) => {
     if (!(resource && entity)) return;
 
     const join = {};
-    join.entity = alias[entity] || entity;
-    join.schema = schema[entity] || schema['default'];
+    join.entity = alias[getEntity(entity)] || getEntity(entity);
+    join.schema = schema[getEntity(entity)] || schema['default'];
     join.endpoint = getEndpoint(join.entity, join.schema);
-    join.foreignKey = getForeignKey(endpoint.entity);
-    join.foreignKeyValue = resource.id;
+    join.foreignKey = getEmbedForeignKey(entity) || getForeignKey(endpoint.entity);
+    join.foreignKeyValue = getEmbedForeignKeyValue(resource, entity);
+
+    console.log(join);
 
     if (db.get(join.endpoint).value) {
-      const query = { [join.foreignKey] : join.foreignKeyValue }
-      resource[join.entity] = db
+      const query = { [join.foreignKey]: join.foreignKeyValue }
+      _.set(resource, entity, db
         .get(join.endpoint)
         .filter(query)
-        .value()
+        .value())
     }
   }
 
@@ -66,17 +92,17 @@ module.exports = (db, name, opts) => {
     if (!(resource && entity)) return;
 
     const join = {};
-    join.entity = alias[entity] || entity;
-    join.schema = schema[entity] || schema['default'];
+    join.entity = alias[getEntity(entity)] || getEntity(entity);
+    join.schema = schema[getEntity(entity)] || schema['default'];
     join.endpoint = getEndpoint(join.entity, join.schema);
     join.foreignKey = getForeignKey(entity);
-    join.foreignKeyValue = resource[join.foreignKey];
+    join.foreignKeyValue = _.get(resource, join.foreignKey);
 
     if (db.get(join.endpoint).value && join.foreignKeyValue) {
-      resource[entity] = db
+      _.set(resource, entity, db
         .get(join.endpoint)
         .getById(join.foreignKeyValue)
-        .value()
+        .value())
     }
   }
 
@@ -144,15 +170,15 @@ module.exports = (db, name, opts) => {
     chain = chain.map(function (element) {
       const clone = _.cloneDeep(element)
 
-      if (_embed) {
-        _embed.split(',').forEach(entity => {
-          embed(clone, entity, schema, alias)
-        })
-      }
-
       if (_expand) {
         _expand.split(',').forEach(entity => {
           expand(clone, entity, schema, alias)
+        })
+      }
+
+      if (_embed) {
+        _embed.split(',').forEach(entity => {
+          embed(clone, entity, schema, alias)
         })
       }
 
@@ -371,24 +397,58 @@ module.exports = (db, name, opts) => {
   // GET /name/:id
   // GET /name/:id?_embed=&_expand
   function show(req, res, next) {
+    let alias = {}, schema = {};
     const _embed = req.query._embed
     const _expand = req.query._expand
+    const _alias = req.query.alias
+    const _schema = req.query.schema
     const resource = db
       .get(name)
       .getById(req.params.id)
-      .value()
+      .value();
+
+    // Get and store alias pairs
+    if (_alias) {
+      _alias.split(',').forEach(pair => {
+        let key, value;
+        [key, value] = pair.split(':');
+        if (!(key && value)) return;
+        alias[key] = value;
+      })
+    }
+
+    // Get and store schema pairs
+    if (_schema) {
+      _schema.split(',').forEach(pair => {
+        let key, value;
+        [key, value] = pair.split(':');
+        if (!key || !value) return;
+        schema[key] = value;
+      })
+    }
+
+    // Get default schema from query or get it from name
+    schema['default'] = schema['default'] || endpoint.schema;
 
     if (resource) {
       // Clone resource to avoid making changes to the underlying object
       const clone = _.cloneDeep(resource)
 
-      // Embed other resources based on resource id
-      // /posts/1?_embed=comments
-      embed(clone, _embed)
-
       // Expand inner resources based on id
       // /posts/1?_expand=user
-      expand(clone, _expand)
+      if (_expand) {
+        _expand.split(',').forEach(entity => {
+          expand(clone, entity, schema, alias)
+        })
+      }
+
+      // Embed other resources based on resource id
+      // /posts/1?_embed=comments
+      if (_embed) {
+        _embed.split(',').forEach(entity => {
+          embed(clone, entity, schema, alias)
+        })
+      }
 
       res.locals.data = clone
     }
