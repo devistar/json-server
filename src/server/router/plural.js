@@ -82,6 +82,7 @@ module.exports = (db, name, opts) => {
       const query = { [join.foreignKey]: join.foreignKeyValue }
       _.set(resource, entity, db
         .get(join.endpoint)
+        .cloneDeep()
         .filter(query)
         .value())
     }
@@ -101,6 +102,7 @@ module.exports = (db, name, opts) => {
     if (db.get(join.endpoint).value && join.foreignKeyValue) {
       _.set(resource, entity, db
         .get(join.endpoint)
+        .cloneDeep()
         .getById(join.foreignKeyValue)
         .value())
     }
@@ -168,21 +170,21 @@ module.exports = (db, name, opts) => {
 
     // Relations: expand and embed
     chain = chain.map(function (element) {
-      const clone = _.cloneDeep(element)
+      // const clone = _.cloneDeep(element)
 
       if (_expand) {
         _expand.split(',').forEach(entity => {
-          expand(clone, entity, schema, alias)
+          expand(element, entity, schema, alias)
         })
       }
 
       if (_embed) {
         _embed.split(',').forEach(entity => {
-          embed(clone, entity, schema, alias)
+          embed(element, entity, schema, alias)
         })
       }
 
-      return clone;
+      return element;
     })
 
     // Full-text search
@@ -389,6 +391,8 @@ module.exports = (db, name, opts) => {
       _limit = parseInt(_limit, 10)
       chain = chain.slice(_start, _start + _limit)
     }
+
+    console.log(db.get('gestloyDossier').getById(1).value());
 
     res.locals.data = chain.value()
     next()
