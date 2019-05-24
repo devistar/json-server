@@ -76,8 +76,6 @@ module.exports = (db, name, opts) => {
     join.foreignKey = getEmbedForeignKey(entity) || getForeignKey(endpoint.entity);
     join.foreignKeyValue = getEmbedForeignKeyValue(resource, entity);
 
-    console.log(join);
-
     if (db.get(join.endpoint).value) {
       const query = { [join.foreignKey]: join.foreignKeyValue }
       _.set(resource, entity, db
@@ -391,8 +389,6 @@ module.exports = (db, name, opts) => {
       _limit = parseInt(_limit, 10)
       chain = chain.slice(_start, _start + _limit)
     }
-
-    console.log(db.get('gestloyDossier').getById(1).value());
 
     res.locals.data = chain.value()
     next()
