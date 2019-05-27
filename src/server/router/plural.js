@@ -114,7 +114,7 @@ module.exports = (db, name, opts) => {
   // GET /name?_embed=&_expand=
   function list(req, res, next) {
     // Resource chain
-    let chain = db.get(name);
+    let chain = db.get(name).cloneDeep();
     let alias = {}, schema = {};
 
     // Remove q, _start, _end, ... from req.query to avoid filtering using those
@@ -318,6 +318,7 @@ module.exports = (db, name, opts) => {
     if (_group) {
       if (!_group || _group.length === 0) return;
       const arr = chain.value();
+      console.log('chain', arr);
       if (arr.find(e => _.get(e, _group))) {
         chain = chain
           .reduce(function (r, a) {
